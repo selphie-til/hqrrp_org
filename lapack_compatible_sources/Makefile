@@ -1,33 +1,31 @@
-
 # Defintions of variables.
 
-CC      = gcc
-CCFLAGS = -O -fopenmp
-LD      = gcc
-LDFLAGS = -O -fopenmp
+CC      = icc
+CCFLAGS = -O2 -qopenmp -DUSE_MKL
+LD      = icc
+LDFLAGS = -O2 -qopenmp
 
-LAPACK_DIR = /opt/AMD/libflame/mt
-BLAS_DIR   = /opt/AMD/blis/mt
+MKL_DIR = /work/opt/local/x86_64/cores/intel/2023.2.0/mkl/latest
 
-CCFLAGS += -I$(LAPACK_DIR)/include -I$(BLAS_DIR)/include/blis
+CCFLAGS += -I$(MKL_DIR)/include
+
+MKL_LIBS = -L$(MKL_DIR)/lib/intel64 \
+           -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core \
+           -lpthread -lm
 
 # Defintions of rules.
-
 simple_test.x : simple_test.o NoFLA_HQRRP_WY_blk_var4.o
 	$(LD) $(LDFLAGS) \
-            -o simple_test.x \
-            simple_test.o \
-            NoFLA_HQRRP_WY_blk_var4.o -lm  \
-            -L$(LAPACK_DIR)/lib -lflame-mt \
-            -L$(BLAS_DIR)/lib -lblis-mt \
-            -lgfortran
+		-o simple_test.x \
+		simple_test.o \
+		NoFLA_HQRRP_WY_blk_var4.o \
+		$(MKL_LIBS)
 
 simple_test.o : simple_test.c
-	$(CC) $(CCFLAGS) -O -fopenmp -c simple_test.c
+	$(CC) $(CCFLAGS) -c simple_test.c
 
 %.o : %.c
 	$(CC) $(CCFLAGS) -c $< -o $@
 
-clean: 
+clean:
 	rm -f a.out *.x *.o *~ core
-

@@ -45,8 +45,8 @@ WITHOUT ANY WARRANTY EXPRESSED OR IMPLIED.
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "blis.h"
-#include "FLAME.h"
+#include "mkl_blas.h"
+#include "mkl_lapack.h"
 #include "NoFLA_HQRRP_WY_blk_var4.h"
 
 
