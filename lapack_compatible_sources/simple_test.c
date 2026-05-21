@@ -91,11 +91,7 @@ int main( int argc, char *argv[] ) {
           + ( t_end.tv_nsec - t_start.tv_nsec ) * 1.0e-9;
   gflops  = ( 4.0 / 3.0 * (double) n_A * (double) n_A * (double) n_A ) / ( elapsed * 1.0e9 );
 
-  printf( "%% n = %d\n", n_A );
-  printf( "%% Time  : %.6f sec\n", elapsed );
-  printf( "%% GFLOPS: %.4f\n", gflops );
-  printf( "%% Info  : %d\n", info );
-
+  printf( "%d,%.6f,%.4f\n", n_A, elapsed, gflops );
   // Remove workspace.
   free( buff_wk_qp4 );
 
@@ -124,8 +120,6 @@ int main( int argc, char *argv[] ) {
   free( buff_p );
   free( buff_tau );
   free( buff_Q );
-
-  printf( "%% End of Program\n" );
 
   return 0;
 }
