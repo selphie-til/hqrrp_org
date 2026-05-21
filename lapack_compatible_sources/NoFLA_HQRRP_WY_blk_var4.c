@@ -45,6 +45,8 @@ WITHOUT ANY WARRANTY EXPRESSED OR IMPLIED.
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "blis.h"
+#include "FLAME.h"
 #include "NoFLA_HQRRP_WY_blk_var4.h"
 
 
@@ -61,8 +63,12 @@ WITHOUT ANY WARRANTY EXPRESSED OR IMPLIED.
 // ============================================================================
 // Definition of macros.
 
+#ifndef max
 #define max( a, b )  ( (a) > (b) ? (a) : (b) )
+#endif
+#ifndef min
 #define min( a, b )  ( (a) > (b) ? (b) : (a) )
+#endif
 #define dabs( a )    ( (a) >= 0.0 ? (a) : -(a) )
 
 // ============================================================================
@@ -137,7 +143,6 @@ void dgeqp4( int * m, int * n, double * A, int * lda, int * jpvt, double * tau,
           m_A, n_A, mn_A, ldim_A, lquery, nb, num_factorized_fixed_cols, 
           minus_info, iws, lwkopt, j, k, num_fixed_cols, n_rest, itmp;
   int     * previous_jpvt;
-  int     ilaenv_();
 
   // Some initializations.
   m_A    = * m;
@@ -162,7 +167,7 @@ void dgeqp4( int * m, int * n, double * A, int * lda, int * jpvt, double * tau,
       lwkopt = 1;
     } else {
       iws    = 3 * n_A + 1;
-      nb     = ilaenv_( & INB, "DGEQRF", ' ', & m_A, & n_A, & i_minus_one, 
+      nb     = ilaenv_( & INB, "DGEQRF", " ", & m_A, & n_A, & i_minus_one,
                         & i_minus_one );
       lwkopt = 2 * n_A + ( n_A + 1 ) * nb;
     }
@@ -175,7 +180,7 @@ void dgeqp4( int * m, int * n, double * A, int * lda, int * jpvt, double * tau,
 
   if( * info != 0 ) {
     minus_info = - * info;
-    xerbla_( "DGEQP3", & minus_info );
+    xerbla_( "DGEQP3", & minus_info, 6 );
     return;
   } else if( lquery ) {
     return;
@@ -794,7 +799,6 @@ static int NoFLA_QRPmod_WY_unb_var4( int pivoting, int num_stages,
   int     j, mn_A, m_a21, m_A22, n_A22, n_dB, idx_max_col, 
           i_one = 1, n_house_vector, m_rest;
   double  * buff_d, * buff_e, * buff_workspace, diag;
-  int     idamax_();
 
   //// printf( "NoFLA_QRPmod_WY_unb_var4. pivoting: %d \n", pivoting );
 
@@ -894,7 +898,6 @@ static int NoFLA_QRP_compute_norms(
 // vectors d and e.
 //
   int     j, i_one = 1;
-  double  dnrm2_();
 
   // Main loop.
   for( j = 0; j < n_A; j++ ) {
@@ -920,7 +923,6 @@ static int NoFLA_QRP_downdate_partial_norms( int m_A, int n_A,
   int     j, i_one = 1;
   double  * ptr_d, * ptr_e, * ptr_wt, * ptr_A;
   double  temp, temp2, temp5, tol3z;
-  double  dnrm2_(), dlamch_();
 
   /*
 *

@@ -1,9 +1,17 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
+#include "blis.h"
+#include "FLAME.h"
+#include "NoFLA_HQRRP_WY_blk_var4.h"
 
+#ifndef max
 #define max( a, b ) ( (a) > (b) ? (a) : (b) )
+#endif
+#ifndef min
 #define min( a, b ) ( (a) < (b) ? (a) : (b) )
+#endif
 
 #define PRINT_DATA
 
@@ -29,12 +37,21 @@ static void set_pvt_to_zero( int n_p, int * buff_p );
 // ============================================================================
 int main( int argc, char *argv[] ) {
   int     nb_alg, pp, m_A, n_A, mn_A, ldim_A, ldim_Q, info, lwork;
+  struct timespec t_start, t_end;
+  double  elapsed, gflops;
   double  * buff_A, * buff_tau, * buff_Q, * buff_wk_qp4, * buff_wk_orgqr;
   int     * buff_p;
 
-  // Create matrix A, vector p, vector s, and matrix Q.
-  m_A      = 7;
-  n_A      = 5;
+  if( argc < 2 ) {
+    fprintf( stderr, "Usage: %s <matrix_size>\n", argv[0] );
+    return 1;
+  }
+  m_A = n_A = atoi( argv[1] );
+  if( m_A <= 0 ) {
+    fprintf( stderr, "Error: matrix_size must be a positive integer.\n" );
+    return 1;
+  }
+
   mn_A     = min( m_A, n_A );
   buff_A   = ( double * ) malloc( m_A * n_A * sizeof( double ) );
   ldim_A   = max( 1, m_A );
@@ -46,23 +63,18 @@ int main( int argc, char *argv[] ) {
   buff_Q   = ( double * ) malloc( m_A * mn_A * sizeof( double ) );
   ldim_Q   = max( 1, m_A );
 
-  // Generate matrix.
+  // Generate matrix with random values in [-1, 1].
+  srand( 42 );
   matrix_generate( m_A, n_A, buff_A, ldim_A );
 
-#ifdef PRINT_DATA
-  print_double_matrix( "ai", m_A, n_A, buff_A, ldim_A );
-  print_double_vector( "taui", n_A, buff_tau );
-#endif
-
-  // Initialize vector with pivots.
+  // Initialize pivot vector to zero (free pivoting).
   set_pvt_to_zero( n_A, buff_p );
-  buff_p[ 0 ] = 0;
-  buff_p[ 1 ] = 1;
-  buff_p[ 2 ] = 1;
-  buff_p[ 3 ] = 0;
-  buff_p[ 4 ] = 1;
+
 #ifdef PRINT_DATA
-  print_int_vector( "pi", n_A, buff_p );
+  if( n_A <= 16 ) {
+    print_double_matrix( "ai", m_A, n_A, buff_A, ldim_A );
+    print_int_vector( "pi", n_A, buff_p );
+  }
 #endif
 
   // Create workspace.
@@ -70,17 +82,19 @@ int main( int argc, char *argv[] ) {
   buff_wk_qp4 = ( double * ) malloc( lwork * sizeof( double ) );
 
   // Factorize matrix.
-  printf( "%% Just before computing factorization.\n" );
-  // New factorization.
-  dgeqp4( & m_A, & n_A, buff_A, & ldim_A, buff_p, buff_tau, 
+  clock_gettime( CLOCK_MONOTONIC, &t_start );
+  dgeqp4( & m_A, & n_A, buff_A, & ldim_A, buff_p, buff_tau,
           buff_wk_qp4, & lwork, & info );
-  // Current factorization.
-  // dgeqp3_( & m_A, & n_A, buff_A, & ldim_A, buff_p, buff_tau, 
-  //          buff_wk_qp4, & lwork, & info );
-  printf( "%% Just after computing factorization.\n" );
+  clock_gettime( CLOCK_MONOTONIC, &t_end );
 
-  printf( "%% Info after factorization:      %d \n", info );
-  printf( "%% Work[ 0 ] after factorization: %d \n", ( int ) buff_wk_qp4[ 0 ] );
+  elapsed = ( t_end.tv_sec  - t_start.tv_sec  )
+          + ( t_end.tv_nsec - t_start.tv_nsec ) * 1.0e-9;
+  gflops  = ( 4.0 / 3.0 * (double) n_A * (double) n_A * (double) n_A ) / ( elapsed * 1.0e9 );
+
+  printf( "%% n = %d\n", n_A );
+  printf( "%% Time  : %.6f sec\n", elapsed );
+  printf( "%% GFLOPS: %.4f\n", gflops );
+  printf( "%% Info  : %d\n", info );
 
   // Remove workspace.
   free( buff_wk_qp4 );
@@ -96,12 +110,13 @@ int main( int argc, char *argv[] ) {
   }
   free( buff_wk_orgqr );
 
-  // Print results.
 #ifdef PRINT_DATA
-  print_double_matrix( "af", m_A, n_A, buff_A, ldim_A );
-  print_int_vector( "pf", n_A, buff_p );
-  print_double_vector( "tauf", n_A, buff_tau );
-  print_double_matrix( "qf", m_A, mn_A, buff_Q, ldim_Q );
+  if( n_A <= 16 ) {
+    print_double_matrix( "af", m_A, n_A, buff_A, ldim_A );
+    print_int_vector( "pf", n_A, buff_p );
+    print_double_vector( "tauf", n_A, buff_tau );
+    print_double_matrix( "qf", m_A, mn_A, buff_Q, ldim_Q );
+  }
 #endif
 
   // Free matrices and vectors.
@@ -117,40 +132,12 @@ int main( int argc, char *argv[] ) {
 
 // ============================================================================
 static void matrix_generate( int m_A, int n_A, double * buff_A, int ldim_A ) {
-  int  i, j, num;
+  int  i, j;
 
-  //
-  // Matrix with integer values.
-  // ---------------------------
-  //
-  if( ( m_A > 0 )&&( n_A > 0 ) ) {
-    num = 1;
-    for ( j = 0; j < n_A; j++ ) {
-      for ( i = ( j % m_A ); i < m_A; i++ ) {
-        buff_A[ i + j * ldim_A ] = ( double ) num;
-        num++;
-      }
-      for ( i = 0; i < ( j % m_A ); i++ ) {
-        buff_A[ i + j * ldim_A ] = ( double ) num;
-        num++;
-      }
+  for ( j = 0; j < n_A; j++ ) {
+    for ( i = 0; i < m_A; i++ ) {
+      buff_A[ i + j * ldim_A ] = 2.0 * ( ( double ) rand() / RAND_MAX ) - 1.0;
     }
-    if( ( m_A > 0 )&&( n_A > 0 ) ) {
-      buff_A[ 0 + 0 * ldim_A ] = 1.2;
-    }
-#if 0
-    // Scale down matrix.
-    if( num == 0.0 ) {
-      rnum = 1.0;
-    } else {
-      rnum = 1.0 / num;
-    }
-    for ( j = 0; j < n_A; j++ ) {
-      for ( i = 0; i < m_A; i++ ) {
-        buff_A[ i + j * ldim_A ] *= rnum;
-      }
-    }
-#endif
   }
 }
 
