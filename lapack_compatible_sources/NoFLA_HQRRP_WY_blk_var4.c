@@ -168,7 +168,7 @@ void dgeqp4( int * m, int * n, double * A, int * lda, int * jpvt, double * tau,
     } else {
       iws    = 3 * n_A + 1;
       nb     = ilaenv_( & INB, "DGEQRF", " ", & m_A, & n_A, & i_minus_one,
-                        & i_minus_one );
+                        & i_minus_one);
       lwkopt = 2 * n_A + ( n_A + 1 ) * nb;
     }
     work[ 0 ] = ( double ) lwkopt;
