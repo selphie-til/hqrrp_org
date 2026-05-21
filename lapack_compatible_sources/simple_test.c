@@ -53,14 +53,14 @@ int main( int argc, char *argv[] ) {
   }
 
   mn_A     = min( m_A, n_A );
-  buff_A   = ( double * ) malloc( m_A * n_A * sizeof( double ) );
+  buff_A   = ( double * ) malloc( (size_t)m_A * n_A * sizeof( double ) );
   ldim_A   = max( 1, m_A );
 
   buff_p   = ( int * ) malloc( n_A * sizeof( int ) );
 
   buff_tau = ( double * ) malloc( n_A * sizeof( double ) );
 
-  buff_Q   = ( double * ) malloc( m_A * mn_A * sizeof( double ) );
+  buff_Q   = ( double * ) malloc( (size_t)m_A * mn_A * sizeof( double ) );
   ldim_Q   = max( 1, m_A );
 
   // Generate matrix with random values in [-1, 1].

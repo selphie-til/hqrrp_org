@@ -387,22 +387,22 @@ int NoFLA_HQRRP_WY_blk_var4( int m_A, int n_A, double * buff_A, int ldim_A,
   // Create auxiliary objects.
   m_Y     = nb_alg + pp;
   n_Y     = n_A;
-  buff_Y  = ( double * ) malloc( m_Y * n_Y * sizeof( double ) );
+  buff_Y  = ( double * ) malloc( (size_t)m_Y * n_Y * sizeof( double ) );
   ldim_Y  = m_Y;
 
   m_V     = nb_alg + pp;
   n_V     = n_A;
-  buff_V  = ( double * ) malloc( m_V * n_V * sizeof( double ) );
+  buff_V  = ( double * ) malloc( (size_t)m_V * n_V * sizeof( double ) );
   ldim_V  = m_V;
 
   m_W     = nb_alg;
   n_W     = n_A;
-  buff_W  = ( double * ) malloc( m_W * n_W * sizeof( double ) );
+  buff_W  = ( double * ) malloc( (size_t)m_W * n_W * sizeof( double ) );
   ldim_W  = m_W;
 
   m_G     = nb_alg + pp;
   n_G     = m_A;
-  buff_G  = ( double * ) malloc( m_G * n_G * sizeof( double ) );
+  buff_G  = ( double * ) malloc( (size_t)m_G * n_G * sizeof( double ) );
   ldim_G  = m_G;
 
   // Initialize matrices G and Y.
@@ -430,7 +430,7 @@ int NoFLA_HQRRP_WY_blk_var4( int m_A, int n_A, double * buff_A, int ldim_A,
 
     m_AB1     = m_A - j;
     n_AB1     = b;
-    buff_AB1  = & buff_A[ j + j * ldim_A ];
+    buff_AB1  = & buff_A[ (size_t)j * ldim_A + j ];
     buff_p1   = & buff_p[ j ];
     buff_s1   = & buff_s[ j ];
     buff_A01  = & buff_A[ 0 + j * ldim_A ];
@@ -438,7 +438,7 @@ int NoFLA_HQRRP_WY_blk_var4( int m_A, int n_A, double * buff_A, int ldim_A,
     buff_T1_T = & buff_W[ 0 + j * ldim_W ];
     ldim_T1_T = ldim_W;
 
-    buff_A11 = & buff_A[ j + j * ldim_A ];
+    buff_A11 = & buff_A[ (size_t)j * ldim_A + j ];
     m_A11 = b;
     n_A11 = b;
 
@@ -469,13 +469,13 @@ int NoFLA_HQRRP_WY_blk_var4( int m_A, int n_A, double * buff_A, int ldim_A,
     n_cyr    = n_Y - j;
     ldim_cyr = m_cyr;
     m_ABR    = m_A - j;
-    buff_cyr = ( double * ) malloc( m_cyr * n_cyr * sizeof( double ) );
+    buff_cyr = ( double * ) malloc( (size_t)m_cyr * n_cyr * sizeof( double ) );
  
     //// FLA_Gemm( FLA_NO_TRANSPOSE, FLA_NO_TRANSPOSE, 
     ////           FLA_ONE, GR, ABR, FLA_ZERO, CYR ); 
     dgemm_( "No tranpose", "No transpose", & m_cyr, & n_cyr, & m_ABR,
             & d_one, & buff_G[ 0 + j * ldim_G ], & ldim_G,
-                     & buff_A[ j + j * ldim_A ], & ldim_A,
+                     & buff_A[ (size_t)j * ldim_A + j ], & ldim_A,
             & d_zero, & buff_cyr[ 0 + 0 * ldim_cyr ], & ldim_cyr );
 
     //// print_double_matrix( "cyr", m_cyr, n_cyr, buff_cyr, ldim_cyr );
@@ -587,7 +587,7 @@ static int NoFLA_Normal_random_matrix( int m_A, int n_A,
   // Main loop.
   for ( j = 0; j < n_A; j++ ) {
     for ( i = 0; i < m_A; i++ ) {
-      buff_A[ i + j * ldim_A ] = NoFLA_Normal_random_number( 0.0, 1.0 );
+      buff_A[ (size_t)j * ldim_A + i ] = NoFLA_Normal_random_number( 0.0, 1.0 );
     }
   }
 
@@ -644,7 +644,7 @@ static int NoFLA_Downdate_Y(
 
   // Create object B.
   //// FLA_Obj_create_conf_to( FLA_NO_TRANSPOSE, G1, & B );
-  buff_B = ( double * ) malloc( m_B * n_B * sizeof( double ) );
+  buff_B = ( double * ) malloc( (size_t)m_B * n_B * sizeof( double ) );
 
   // B = G1.
   //// FLA_Copy( G1, B );
@@ -729,7 +729,7 @@ static int NoFLA_Apply_Q_WY_lhfc_blk_var4(
 
   // Create auxiliary object.
   //// FLA_Obj_create_conf_to( FLA_NO_TRANSPOSE, B1, & W );
-  buff_W = ( double * ) malloc( n_B * n_U * sizeof( double ) );
+  buff_W = ( double * ) malloc( (size_t)n_B * n_U * sizeof( double ) );
   ldim_W = max( 1, n_B );
  
   // Apply the block transformation. 
@@ -760,7 +760,7 @@ static int NoFLA_Apply_Q_WY_rnfc_blk_var4(
 
   // Create auxiliary object.
   //// FLA_Obj_create_conf_to( FLA_TRANSPOSE, B1, & W );
-  buff_W = ( double * ) malloc( m_B * n_U * sizeof( double ) );
+  buff_W = ( double * ) malloc( (size_t)m_B * n_U * sizeof( double ) );
   ldim_W = max( 1, m_B );
   
   // Apply the block transformation. 
@@ -847,7 +847,7 @@ static int NoFLA_QRPmod_WY_unb_var4( int pivoting, int num_stages,
     // the entries in a21 (and updates alpha11).
     n_house_vector = m_a21 + 1;
     dlarfg_( & n_house_vector,
-             & buff_A[ j + j * ldim_A ],
+             & buff_A[ (size_t)j * ldim_A + j ],
              & buff_A[ min( m_A-1, j+1 ) + j * ldim_A ], & i_one,
              & buff_t[ j ] );
 
@@ -855,15 +855,15 @@ static int NoFLA_QRPmod_WY_unb_var4( int pivoting, int num_stages,
     // \ A22  /      \ A22  /
     //
     // where H is formed from tau1 and u21.
-    diag = buff_A[ j + j * ldim_A ];
-    buff_A[ j + j * ldim_A ] = 1.0;
+    diag = buff_A[ (size_t)j * ldim_A + j ];
+    buff_A[ (size_t)j * ldim_A + j ] = 1.0;
     m_rest = m_A22 + 1;
     dlarf_( "Left", & m_rest, & n_A22, 
-        & buff_A[ j + j * ldim_A ], & i_one,
+        & buff_A[ (size_t)j * ldim_A + j ], & i_one,
         & buff_t[ j ],
         & buff_A[ j + ( j+1 ) * ldim_A ], & ldim_A,
         buff_workspace );
-    buff_A[ j + j * ldim_A ] = diag;
+    buff_A[ (size_t)j * ldim_A + j ] = diag;
 
     if( pivoting == 1 ) {
       // Update partial column norms.
