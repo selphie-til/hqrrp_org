@@ -130,7 +130,7 @@ static void matrix_generate( int m_A, int n_A, double * buff_A, int ldim_A ) {
 
   for ( j = 0; j < n_A; j++ ) {
     for ( i = 0; i < m_A; i++ ) {
-      buff_A[ i + j * ldim_A ] = 2.0 * ( ( double ) rand() / RAND_MAX ) - 1.0;
+      buff_A[ i + (size_t)j * ldim_A ] = 2.0 * ( ( double ) rand() / RAND_MAX ) - 1.0;
     }
   }
 }

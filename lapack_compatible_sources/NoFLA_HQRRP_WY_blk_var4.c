@@ -209,8 +209,8 @@ void dgeqp4( int * m, int * n, double * A, int * lda, int * jpvt, double * tau,
     if( jpvt[ j ] != 0 ) {
       if( j != num_fixed_cols ) {
         //// printf( "Swapping columns: %d %d \n", j, num_fixed_cols );
-        dswap_( & m_A, & A[ 0 + j              * ldim_A ], & i_one, 
-                       & A[ 0 + num_fixed_cols * ldim_A ], & i_one );
+        dswap_( & m_A, & A[ (size_t)j              * ldim_A ], & i_one,
+                       & A[ (size_t)num_fixed_cols * ldim_A ], & i_one );
         jpvt[ j ] = jpvt[ num_fixed_cols ];
         jpvt[ num_fixed_cols ] = j + 1;
       } else {
@@ -236,7 +236,7 @@ void dgeqp4( int * m, int * n, double * A, int * lda, int * jpvt, double * tau,
       dormqr_( "Left", "Transpose", 
                & m_A, & n_rest, & num_factorized_fixed_cols,
                A, & ldim_A, tau,
-               & A[ 0 + num_factorized_fixed_cols * ldim_A ], & ldim_A, 
+               & A[ (size_t)num_factorized_fixed_cols * ldim_A ], & ldim_A,
                work, lwork, info );
       if( * info != 0 ) {
         fprintf( stderr, "ERROR in dormqr: Info: %d \n", * info );
@@ -262,7 +262,7 @@ void dgeqp4( int * m, int * n, double * A, int * lda, int * jpvt, double * tau,
   if( num_factorized_fixed_cols < mn_A ) {
     * info = NoFLA_HQRRP_WY_blk_var4( 
         m_A - num_factorized_fixed_cols, n_A - num_factorized_fixed_cols, 
-        & A[ num_factorized_fixed_cols + num_factorized_fixed_cols * ldim_A ], 
+        & A[ num_factorized_fixed_cols + (size_t)num_factorized_fixed_cols * ldim_A ],
             ldim_A,
         & jpvt[ num_factorized_fixed_cols ], 
         & tau[ num_factorized_fixed_cols ],
@@ -290,8 +290,8 @@ void dgeqp4( int * m, int * n, double * A, int * lda, int * jpvt, double * tau,
 
         // Swap columns in block above factorized block.
         dswap_( & num_factorized_fixed_cols,
-                & A[ 0 + j * ldim_A ], & i_one,
-                & A[ 0 + k * ldim_A ], & i_one );
+                & A[ (size_t)j * ldim_A ], & i_one,
+                & A[ (size_t)k * ldim_A ], & i_one );
       }
     }
   }
@@ -426,14 +426,14 @@ int NoFLA_HQRRP_WY_blk_var4( int m_A, int n_A, double * buff_A, int ldim_A,
     buff_YR = & buff_Y[ 0 + j * ldim_Y ];
     buff_pB = & buff_p[ j ];
     buff_sB = & buff_s[ j ];
-    buff_AR = & buff_A[ 0 + j * ldim_A ];
+    buff_AR = & buff_A[ (size_t)j * ldim_A ];
 
     m_AB1     = m_A - j;
     n_AB1     = b;
     buff_AB1  = & buff_A[ (size_t)j * ldim_A + j ];
     buff_p1   = & buff_p[ j ];
     buff_s1   = & buff_s[ j ];
-    buff_A01  = & buff_A[ 0 + j * ldim_A ];
+    buff_A01  = & buff_A[ (size_t)j * ldim_A ];
     buff_Y1   = & buff_Y[ 0 + j * ldim_Y ];
     buff_T1_T = & buff_W[ 0 + j * ldim_W ];
     ldim_T1_T = ldim_W;
@@ -442,11 +442,11 @@ int NoFLA_HQRRP_WY_blk_var4( int m_A, int n_A, double * buff_A, int ldim_A,
     m_A11 = b;
     n_A11 = b;
 
-    buff_A21 = & buff_A[ min( m_A - 1, j + nb_alg ) + j * ldim_A ];
+    buff_A21 = & buff_A[ min( m_A - 1, j + nb_alg ) + (size_t)j * ldim_A ];
     m_A21 = max( 0, m_A - j - b );
     n_A21 = b;
 
-    buff_A12 = & buff_A[ j + min( n_A - 1, j + b ) * ldim_A ];
+    buff_A12 = & buff_A[ j + (size_t)min( n_A - 1, j + b ) * ldim_A ];
     m_A12 = b;
     n_A12 = max( 0, n_A - j - b );
 
@@ -833,9 +833,9 @@ static int NoFLA_QRPmod_WY_unb_var4( int pivoting, int num_stages,
 
       // Swap columns of A, B, C, pivots, and norms vectors.
       NoFLA_QRP_pivot_G_B_C( idx_max_col,
-          m_A, & buff_A[ 0 + j * ldim_A ], ldim_A,
-          pivot_B, m_B, & buff_B[ 0 + j * ldim_B ], ldim_B,
-          pivot_C, m_C, & buff_C[ 0 + j * ldim_C ], ldim_C,
+          m_A, & buff_A[ (size_t)j * ldim_A ], ldim_A,
+          pivot_B, m_B, & buff_B[ (size_t)j * ldim_B ], ldim_B,
+          pivot_C, m_C, & buff_C[ (size_t)j * ldim_C ], ldim_C,
           & buff_p[ j ],
           & buff_d[ j ],
           & buff_e[ j ] );
@@ -848,7 +848,7 @@ static int NoFLA_QRPmod_WY_unb_var4( int pivoting, int num_stages,
     n_house_vector = m_a21 + 1;
     dlarfg_( & n_house_vector,
              & buff_A[ (size_t)j * ldim_A + j ],
-             & buff_A[ min( m_A-1, j+1 ) + j * ldim_A ], & i_one,
+             & buff_A[ min( m_A-1, j+1 ) + (size_t)j * ldim_A ], & i_one,
              & buff_t[ j ] );
 
     // / a12t \ =  H / a12t \
@@ -861,7 +861,7 @@ static int NoFLA_QRPmod_WY_unb_var4( int pivoting, int num_stages,
     dlarf_( "Left", & m_rest, & n_A22, 
         & buff_A[ (size_t)j * ldim_A + j ], & i_one,
         & buff_t[ j ],
-        & buff_A[ j + ( j+1 ) * ldim_A ], & ldim_A,
+        & buff_A[ j + (size_t)( j+1 ) * ldim_A ], & ldim_A,
         buff_workspace );
     buff_A[ (size_t)j * ldim_A + j ] = diag;
 
@@ -870,8 +870,8 @@ static int NoFLA_QRPmod_WY_unb_var4( int pivoting, int num_stages,
       NoFLA_QRP_downdate_partial_norms( m_A22, n_A22, 
           & buff_d[ j+1 ], 1,
           & buff_e[ j+1 ], 1,
-          & buff_A[ j + ( j+1 ) * ldim_A ], ldim_A,
-          & buff_A[ ( j+1 ) + min( n_A-1, ( j+1 ) ) * ldim_A ], ldim_A );
+          & buff_A[ j + (size_t)( j+1 ) * ldim_A ], ldim_A,
+          & buff_A[ ( j+1 ) + (size_t)min( n_A-1, ( j+1 ) ) * ldim_A ], ldim_A );
     }
   }
 
@@ -1007,20 +1007,20 @@ static int NoFLA_QRP_pivot_G_B_C( int j_max_col,
 
     // Swap full column 0 and column "j_max_col" of G.
     ptr_g1 = & buff_G[ 0 + 0         * ldim_G ];
-    ptr_g2 = & buff_G[ 0 + j_max_col * ldim_G ];
+    ptr_g2 = & buff_G[ (size_t)j_max_col * ldim_G ];
     dswap_( & m_G, ptr_g1, & i_one, ptr_g2, & i_one );
 
     // Swap full column 0 and column "j_max_col" of B.
     if( pivot_B ) {
       ptr_b1 = & buff_B[ 0 + 0         * ldim_B ];
-      ptr_b2 = & buff_B[ 0 + j_max_col * ldim_B ];
+      ptr_b2 = & buff_B[ (size_t)j_max_col * ldim_B ];
       dswap_( & m_B, ptr_b1, & i_one, ptr_b2, & i_one );
     }
 
     // Swap full column 0 and column "j_max_col" of C.
     if( pivot_C ) {
       ptr_c1 = & buff_C[ 0 + 0         * ldim_C ];
-      ptr_c2 = & buff_C[ 0 + j_max_col * ldim_C ];
+      ptr_c2 = & buff_C[ (size_t)j_max_col * ldim_C ];
       dswap_( & m_C, ptr_c1, & i_one, ptr_c2, & i_one );
     }
 
